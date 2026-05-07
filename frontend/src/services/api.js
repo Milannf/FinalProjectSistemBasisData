@@ -1,0 +1,42 @@
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || '/api',
+  timeout: 15000,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+api.interceptors.response.use(
+  (res) => res.data,
+  (err) => {
+    const msg = err.response?.data?.error || err.message || 'Request failed';
+    return Promise.reject(new Error(msg));
+  }
+);
+
+// Player
+export const fetchPlayers = () => api.get('/player');
+export const fetchPlayer = (id) => api.get(`/player/${id}`);
+export const fetchPlayerHistory = (id, limit = 50) => api.get(`/player/${id}/history?limit=${limit}`);
+export const fetchPlayerStats = (id) => api.get(`/player/${id}/stats`);
+
+// Game
+export const spinGame = (playerId, betAmount) => api.post('/game/spin', { playerId, betAmount });
+export const startSession = (playerId) => api.post('/game/start-session', { playerId });
+export const endSession = (playerId, sessionId) => api.post('/game/end-session', { playerId, sessionId });
+
+// RTP
+export const fetchRTPProfile = (playerId) => api.get(`/rtp/${playerId}`);
+export const resetRTP = (playerId) => api.post(`/rtp/reset/${playerId}`);
+
+// Leaderboard
+export const fetchLeaderboard = (metric = 'profit') => api.get(`/leaderboard?metric=${metric}`);
+
+// Admin
+export const simulateSpins = (playerId, count) => api.post('/admin/simulate-spins', { playerId, count });
+export const fetchSystemStats = () => api.get('/admin/system-stats');
+export const forceWinStreak = (playerId, streakLength) => api.post('/admin/force-win-streak', { playerId, streakLength });
+export const forceLoseStreak = (playerId, streakLength) => api.post('/admin/force-lose-streak', { playerId, streakLength });
+export const inspectRedis = () => api.get('/admin/inspect-redis');
+
+export default api;
