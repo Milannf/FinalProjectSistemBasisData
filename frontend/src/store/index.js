@@ -1,6 +1,98 @@
 import { create } from 'zustand';
 import { fetchPlayer, fetchPlayers, spinGame, fetchPlayerStats, fetchPlayerHistory } from '../services/api';
 
+export const useAuthStore = create((set, get) => ({
+  user: null,
+  token: null,
+  isAuthenticated: false,
+  loading: false,
+  error: null,
+
+  login: async (usernameOrEmail, password) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usernameOrEmail, password }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+
+      localStorage.setItem('token', data.token);
+      set({ user: data.user, token: data.token, isAuthenticated: true, loading: false });
+      return data;
+    } catch (err) {
+      set({ error: err.message, loading: false });
+      throw err;
+    }
+  },
+
+  register: async (username, email, password) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+
+      localStorage.setItem('token', data.token);
+      set({ user: data.user, token: data.token, isAuthenticated: true, loading: false });
+      return data;
+    } catch (err) {
+      set({ error: err.message, loading: false });
+      throw err;
+    }
+  },
+
+  guestLogin: async () => {
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch('/api/auth/guest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+
+      localStorage.setItem('token', data.token);
+      set({ user: data.user, token: data.token, isAuthenticated: true, loading: false });
+      return data;
+    } catch (err) {
+      set({ error: err.message, loading: false });
+      throw err;
+    }
+  },
+
+  logout: () => {
+    localStorage.removeItem('token');
+    set({ user: null, token: null, isAuthenticated: false });
+  },
+
+  checkAuth: async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      const response = await fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        set({ user: data.user, token, isAuthenticated: true });
+        return data;
+      } else {
+        localStorage.removeItem('token');
+      }
+    } catch (err) {
+      localStorage.removeItem('token');
+    }
+  },
+}));
+
 export const usePlayerStore = create((set, get) => ({
   currentPlayer: null,
   players: [],
@@ -14,7 +106,6 @@ export const usePlayerStore = create((set, get) => ({
     try {
       const players = await fetchPlayers();
       set({ players, loading: false });
-      // Auto-select first player if none selected
       if (!get().currentPlayer && players.length > 0) {
         set({ currentPlayer: players[0] });
       }
@@ -23,11 +114,14 @@ export const usePlayerStore = create((set, get) => ({
     }
   },
 
+  loadPlayerFromAuth: (player) => {
+    set({ currentPlayer: player });
+  },
+
   refreshPlayer: async (id) => {
     try {
       const player = await fetchPlayer(id);
       set({ currentPlayer: player });
-      // Update in players list too
       set((state) => ({
         players: state.players.map((p) => (p.id === id ? { ...p, ...player } : p)),
       }));

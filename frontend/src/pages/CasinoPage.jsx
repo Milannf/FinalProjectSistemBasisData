@@ -91,209 +91,160 @@ export default function CasinoPage() {
   }
 
   return (
-    <div className="min-h-screen pt-16 bg-grid">
-      <Notification notification={notification} />
+    <div className="relative min-h-screen bg-grid pt-32 pb-20 overflow-hidden">
+      <div className="absolute inset-0 bg-black/60" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(245,197,24,0.12),transparent_35%),radial-gradient(circle_at_bottom,_rgba(0,245,255,0.08),transparent_45%)]" />
 
-      {/* Flash overlay */}
-      {showFlash && (
-        <div
-          className={`fixed inset-0 pointer-events-none z-40 transition-opacity duration-300
-            ${flashType === 'win' ? 'outcome-win' : 'outcome-lose'}`}
-        />
-      )}
+      <div className="relative z-10">
+        <Notification notification={notification} />
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="font-orbitron text-2xl font-bold gradient-text-gold">CASINO FLOOR</h1>
-            <p className="text-gray-500 font-rajdhani text-sm">Playing as {currentPlayer.username}</p>
-          </div>
-          <div className="glass-gold border border-yellow-500/30 rounded-xl px-6 py-3 text-center">
-            <div className="text-xs text-gray-400 font-rajdhani uppercase tracking-wider">Balance</div>
-            <div className="font-orbitron font-bold text-2xl text-yellow-400 text-glow-gold">
-              {currentPlayer.balance?.toLocaleString(undefined, { maximumFractionDigits: 0 })} 🪙
+        {showFlash && (
+          <div
+            className={`fixed inset-0 pointer-events-none z-40 transition-opacity duration-300 ${flashType === 'win' ? 'outcome-win' : 'outcome-lose'}`}
+          />
+        )}
+
+        <div className="max-w-7xl mx-auto px-4 py-10">
+          <div className="glass border border-white/10 rounded-[40px] p-10">
+            <div className="flex flex-col xl:flex-row items-start justify-between gap-6 mb-10">
+              <div>
+                <div className="text-sm uppercase tracking-[0.35em] text-yellow-300 font-semibold mb-2">Casino floor</div>
+                <h1 className="font-orbitron text-5xl lg:text-6xl font-black text-white leading-tight">Premium spin suite</h1>
+                <p className="text-gray-400 font-rajdhani mt-4 max-w-2xl">Big casino energy with a larger, centered spin section and premium HUD layout.</p>
+              </div>
+              <div className="glass-gold border border-yellow-500/30 rounded-[28px] px-6 py-5 text-center min-w-[220px]">
+                <div className="text-xs uppercase tracking-[0.3em] text-gray-400 mb-2">Balance</div>
+                <div className="font-orbitron text-4xl font-black text-yellow-300 text-glow-gold">{currentPlayer.balance?.toLocaleString(undefined, { maximumFractionDigits: 0 })} 🪙</div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main game area */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Slot machine */}
-            <div className="glass border border-yellow-500/15 rounded-2xl p-8 relative overflow-hidden">
-              {/* Decorative lines */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-4 bg-yellow-500/40" />
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-px h-4 bg-yellow-500/40" />
-
-              <div className="text-center mb-8">
-                <div className="text-xs font-rajdhani text-gray-500 uppercase tracking-widest mb-2">SPIN TO WIN</div>
-                <div
-                  className={`inline-block px-4 py-1.5 rounded-full text-sm font-rajdhani font-bold border mb-4
-                    ${outcome === 'win' ? 'border-green-500/40 text-green-400 bg-green-500/10' :
-                      outcome === 'lose' ? 'border-red-500/40 text-red-400 bg-red-500/10' :
-                      'border-white/10 text-gray-400'}`}
-                >
-                  {outcome === 'win' ? `✅ WIN! +${lastResult?.payout?.toFixed(0)} coins (${lastResult?.multiplier}x)` :
-                   outcome === 'lose' ? '❌ No Luck This Time' :
-                   isSpinning ? '⏳ Spinning...' : '🎰 Ready to Spin'}
+            <div className="grid gap-10 xl:grid-cols-[1.6fr_1fr]">
+              <div className="glass border border-yellow-500/15 rounded-[32px] p-8">
+                <div className="text-center mb-8">
+                  <div className="text-xs uppercase tracking-[0.35em] text-gray-400 mb-3">Spin to win</div>
+                  <div className={`inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold ${
+                    outcome === 'win'
+                      ? 'bg-green-500/15 text-green-300 border border-green-500/30'
+                      : outcome === 'lose'
+                      ? 'bg-red-500/15 text-red-300 border border-red-500/30'
+                      : 'bg-white/10 text-gray-300 border border-white/15'
+                  }`}>
+                    {outcome === 'win'
+                      ? `✅ WIN! +${lastResult?.payout?.toFixed(0)} coins (${lastResult?.multiplier}x)`
+                      : outcome === 'lose'
+                      ? '❌ No Luck This Time'
+                      : isSpinning
+                      ? '⏳ Spinning...'
+                      : '🎰 Ready to Spin'}
+                  </div>
                 </div>
-              </div>
 
-              {/* Reels */}
-              <div className="flex justify-center mb-8">
-                <div className={`p-4 rounded-2xl border-2 transition-all duration-300 ${
-                  isSpinning ? 'border-yellow-500/60 glow-gold' :
-                  outcome === 'win' ? 'border-green-500/60 glow-green' :
-                  outcome === 'lose' ? 'border-red-500/30' :
-                  'border-white/10'
-                }`}>
-                  <SlotReels
-                    spinning={isSpinning}
-                    outcome={outcome}
-                    multiplier={lastResult?.multiplier}
-                  />
+                <div className="flex justify-center mb-10">
+                  <div className={`rounded-[32px] p-4 border-2 transition-all duration-300 ${
+                    isSpinning ? 'border-yellow-500/60 glow-gold' : outcome === 'win' ? 'border-green-500/60 glow-green' : outcome === 'lose' ? 'border-red-500/30' : 'border-white/10'
+                  }`}>
+                    <SlotReels spinning={isSpinning} outcome={outcome} multiplier={lastResult?.multiplier} />
+                  </div>
                 </div>
-              </div>
 
-              {/* Bet controls */}
-              <div className="space-y-4">
-                <div className="flex gap-2 flex-wrap justify-center">
-                  {BET_PRESETS.map((preset) => (
+                <div className="space-y-6">
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    {BET_PRESETS.map((preset) => (
+                      <button
+                        key={preset}
+                        onClick={() => setBetAmount(preset)}
+                        className={`rounded-2xl px-4 py-3 text-sm font-semibold transition-all ${
+                          betAmount === preset
+                            ? 'bg-yellow-500/20 border border-yellow-500/40 text-yellow-300'
+                            : 'bg-white/5 border border-white/10 text-gray-300 hover:border-yellow-500/30 hover:text-yellow-200'
+                        }`}
+                      >
+                        {preset}
+                      </button>
+                    ))}
                     <button
-                      key={preset}
-                      onClick={() => setBetAmount(preset)}
-                      className={`px-4 py-2 rounded-lg text-sm font-rajdhani font-semibold transition-all
-                        ${betAmount === preset
-                          ? 'bg-yellow-500/20 border border-yellow-500/50 text-yellow-400'
-                          : 'glass border border-white/08 text-gray-400 hover:border-yellow-500/30 hover:text-yellow-400'}`}
+                      onClick={() => setBetAmount(Math.floor(currentPlayer.balance / 2))}
+                      className="rounded-2xl px-4 py-3 text-sm font-semibold bg-white/5 border border-white/10 text-gray-300 hover:border-yellow-500/30 hover:text-yellow-200 transition-all"
                     >
-                      {preset}
+                      ½ MAX
                     </button>
-                  ))}
-                  <button
-                    onClick={() => setBetAmount(Math.floor(currentPlayer.balance / 2))}
-                    className="px-4 py-2 rounded-lg text-sm font-rajdhani font-semibold glass border border-white/08 text-gray-400 hover:border-yellow-500/30 hover:text-yellow-400 transition-all"
-                  >
-                    ½ MAX
-                  </button>
+                  </div>
+
+                  <div className="max-w-md mx-auto">
+                    <input
+                      ref={betInputRef}
+                      type="number"
+                      value={betAmount}
+                      onChange={(e) => setBetAmount(Math.max(1, parseInt(e.target.value) || 0))}
+                      className="casino-input text-center text-xl"
+                      min={1}
+                      max={currentPlayer.balance}
+                    />
+                  </div>
+
+                  <div className="flex justify-center">
+                    <button
+                      id="spin-button"
+                      onClick={handleSpin}
+                      disabled={isSpinning || betAmount <= 0 || betAmount > currentPlayer.balance}
+                      className="spin-btn w-44 h-44 flex items-center justify-center text-black font-orbitron font-black text-2xl glow-gold"
+                      style={{ background: 'linear-gradient(135deg, #f5c518, #b8960c)' }}
+                    >
+                      {isSpinning ? (
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="text-4xl animate-rotate-slow">⚙️</div>
+                          <span className="text-sm uppercase tracking-[0.2em]">SPIN</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-5xl">🎰</span>
+                          <span className="text-sm uppercase tracking-[0.2em]">SPIN</span>
+                        </div>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="glass border border-white/10 rounded-[32px] p-6">
+                  <div className="text-sm uppercase tracking-[0.35em] text-gray-400 mb-5">Session stats</div>
+                  <div className="grid gap-4 grid-cols-2">
+                    <div className="pill-card p-4 text-center">
+                      <div className="text-xs uppercase tracking-[0.25em] text-gray-400">Win rate</div>
+                      <div className="text-3xl font-orbitron font-black text-yellow-300">57.4%</div>
+                    </div>
+                    <div className="pill-card p-4 text-center">
+                      <div className="text-xs uppercase tracking-[0.25em] text-gray-400">RTP</div>
+                      <div className="text-3xl font-orbitron font-black text-cyan-300">57%</div>
+                    </div>
+                    <div className="pill-card p-4 text-center">
+                      <div className="text-xs uppercase tracking-[0.25em] text-gray-400">Win streak</div>
+                      <div className="text-3xl font-orbitron font-black text-green-300">{Math.max(0, currentPlayer?.balance ? Math.floor(currentPlayer.balance / 1000) : 1)}</div>
+                    </div>
+                    <div className="pill-card p-4 text-center">
+                      <div className="text-xs uppercase tracking-[0.25em] text-gray-400">Lose streak</div>
+                      <div className="text-3xl font-orbitron font-black text-red-300">1</div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex gap-3 items-center max-w-sm mx-auto">
-                  <input
-                    ref={betInputRef}
-                    type="number"
-                    value={betAmount}
-                    onChange={(e) => setBetAmount(Math.max(1, parseInt(e.target.value) || 0))}
-                    className="casino-input text-center"
-                    min={1}
-                    max={currentPlayer.balance}
-                  />
-                </div>
-
-                {/* SPIN BUTTON */}
-                <div className="flex justify-center pt-2">
-                  <button
-                    id="spin-button"
-                    onClick={handleSpin}
-                    disabled={isSpinning || betAmount <= 0 || betAmount > currentPlayer.balance}
-                    className="spin-btn w-36 h-36 flex items-center justify-center text-black font-orbitron font-black text-xl glow-gold"
-                    style={{ background: 'linear-gradient(135deg, #f5c518, #b8960c)' }}
-                  >
-                    {isSpinning ? (
-                      <div className="flex flex-col items-center">
-                        <div className="text-3xl animate-rotate-slow">⚙️</div>
-                        <span className="text-xs mt-1">SPIN</span>
+                <div className="glass border border-white/10 rounded-[32px] p-6">
+                  <div className="text-sm uppercase tracking-[0.35em] text-gray-400 mb-5">Recent outcomes</div>
+                  <div className="space-y-3">
+                    {localHistory.slice(0, 5).map((r, i) => (
+                      <div key={i} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/90">
+                        <span>{r.outcome === 'win' ? 'Win' : 'Loss'}</span>
+                        <span className={r.outcome === 'win' ? 'text-green-300' : 'text-red-300'}>
+                          {r.outcome === 'win' ? `+${r.payout?.toFixed(0)}` : `-${r.betAmount?.toFixed(0)}`}
+                        </span>
                       </div>
-                    ) : (
-                      <div className="flex flex-col items-center">
-                        <span className="text-4xl">🎰</span>
-                        <span className="text-xs mt-1">SPIN</span>
-                      </div>
+                    ))}
+                    {!localHistory.length && (
+                      <div className="text-center text-gray-500 text-sm">No recent outcomes yet.</div>
                     )}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Recent outcomes */}
-            <div className="glass border border-white/05 rounded-xl p-5">
-              <h3 className="font-orbitron text-sm font-bold text-gray-300 mb-4">RECENT OUTCOMES</h3>
-              <div className="flex flex-wrap gap-2">
-                {localHistory.slice(0, 20).map((r, i) => (
-                  <div
-                    key={i}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-rajdhani font-semibold border animate-scale-in
-                      ${r.outcome === 'win'
-                        ? 'bg-green-500/10 border-green-500/30 text-green-400'
-                        : 'bg-red-500/10 border-red-500/20 text-red-400'}`}
-                  >
-                    {r.outcome === 'win' ? `+${r.payout?.toFixed(0)}` : `-${r.betAmount?.toFixed(0)}`}
                   </div>
-                ))}
-                {localHistory.length === 0 && (
-                  <span className="text-gray-600 text-xs font-rajdhani">No spins yet...</span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Right sidebar */}
-          <div className="space-y-4">
-            {/* Stats */}
-            <StatCard
-              label="Win Rate (current)"
-              value={`${(winRate * 100).toFixed(1)}%`}
-              icon="🎯"
-              color={winRate >= 0.5 ? 'green' : winRate >= 0.4 ? 'gold' : 'pink'}
-            />
-
-            <div className="grid grid-cols-2 gap-3">
-              <StatCard label="Win Streak 🔥" value={winStreak} color="green" />
-              <StatCard label="Lose Streak 💔" value={loseStreak} color="red" />
-            </div>
-
-            <StatCard
-              label="Pity Counter"
-              value={`${rtpProfile?.pityCounter || 0} / 15`}
-              icon="🙏"
-              color="purple"
-              sub="Guaranteed win at 15"
-            />
-
-            <RTPMeter winRate={winRate} />
-
-            {/* Player stats */}
-            <div className="glass border border-white/05 rounded-xl p-4 space-y-3">
-              <h3 className="font-orbitron text-xs font-bold text-gray-400 uppercase tracking-wider">Session Stats</h3>
-              {[
-                { label: 'Total Wins', value: currentPlayer.totalWins, color: 'text-green-400' },
-                { label: 'Total Losses', value: currentPlayer.totalLosses, color: 'text-red-400' },
-                { label: 'Total Profit', value: `${currentPlayer.totalProfit?.toFixed(0)} 🪙`, color: currentPlayer.totalProfit >= 0 ? 'text-green-400' : 'text-red-400' },
-                { label: 'Best Win', value: `${currentPlayer.highestSingleWin?.toFixed(0)} 🪙`, color: 'text-yellow-400' },
-              ].map((s) => (
-                <div key={s.label} className="flex justify-between items-center">
-                  <span className="text-gray-500 text-xs font-rajdhani">{s.label}</span>
-                  <span className={`font-rajdhani font-bold text-sm ${s.color}`}>{s.value}</span>
                 </div>
-              ))}
-            </div>
-
-            {/* Volatility level */}
-            <div className="glass border border-purple-500/20 rounded-xl p-4">
-              <div className="text-xs text-gray-400 font-rajdhani uppercase tracking-wider mb-2">Volatility</div>
-              <div className="flex gap-2">
-                {['low', 'medium', 'high'].map((v) => (
-                  <div
-                    key={v}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-rajdhani font-bold text-center capitalize
-                      ${rtpProfile?.volatilityLevel === 1.0 && v === 'medium'
-                        ? 'bg-purple-500/20 border border-purple-500/40 text-purple-400'
-                        : 'glass border border-white/05 text-gray-500'}`}
-                  >
-                    {v}
-                  </div>
-                ))}
               </div>
             </div>
           </div>

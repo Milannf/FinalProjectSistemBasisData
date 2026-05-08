@@ -40,52 +40,77 @@ export default function GamesPage() {
   }
 
   return (
-    <div className="min-h-screen pt-20 pb-20 bg-grid">
-      {/* Header */}
-      <div className="max-w-7xl mx-auto px-4 mb-12">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="font-orbitron text-4xl font-black gradient-text-gold mb-2">GAMES LOBBY</h1>
-            <p className="text-gray-400 font-rajdhani">Playing as <span className="text-yellow-400">{currentPlayer?.username}</span> • Balance: {currentPlayer?.balance?.toFixed(0)} 🪙</p>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-orbitron font-bold text-yellow-400">{currentPlayer?.balance?.toFixed(0)}</div>
-            <div className="text-xs text-gray-500 font-rajdhani">BALANCE</div>
-          </div>
+    <div className="relative min-h-screen overflow-hidden bg-grid pt-28 pb-24">
+      <div className="absolute inset-0 bg-black/60" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(245,197,24,0.12),transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(0,245,255,0.1),transparent_35%)]" />
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4">
+        <div className="text-center mb-12">
+          <div className="premium-section-heading mb-4">OUR GAMES</div>
+          <h1 className="font-orbitron text-5xl md:text-6xl font-black text-white mb-4">Choose your casino challenge</h1>
+          <p className="max-w-3xl mx-auto text-gray-400 font-rajdhani text-base md:text-lg">
+            Select from high-energy casino games built for premium casino flow and future expansion.
+          </p>
         </div>
 
-        {/* Game Selection Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
           {games.map(game => (
             <button
               key={game.id}
               onClick={() => setSelectedGame(game.id)}
-              className={`p-4 rounded-xl font-rajdhani font-bold transition-all transform hover:scale-105 border-2 ${
+              className={`relative overflow-hidden rounded-[32px] border-2 p-8 text-left transition-all duration-300 ${
                 selectedGame === game.id
-                  ? `bg-gradient-to-b ${game.color} border-white/40 text-white scale-105 shadow-lg shadow-white/20`
-                  : 'bg-white/05 border-white/10 text-gray-400 hover:border-white/30'
+                  ? `bg-gradient-to-br ${game.color} border-white/30 text-white shadow-[0_30px_80px_rgba(255,214,0,0.16)]`
+                  : 'bg-white/5 border-white/10 text-gray-300 hover:border-yellow-500/30 hover:bg-white/10'
               }`}
             >
-              <div className="text-2xl mb-1">{game.icon}</div>
-              <div className="text-xs">{game.name.split(' ')[1]}</div>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <div className="text-3xl mb-2">{game.icon}</div>
+                  <div className="font-orbitron text-2xl font-black tracking-[0.06em]">{game.name}</div>
+                </div>
+                <div className="text-xs uppercase tracking-[0.35em] text-gray-400">Play</div>
+              </div>
+              <div className="text-sm text-gray-300 leading-relaxed font-rajdhani">
+                {game.id === 'slots' && 'Classic spins, big wins and cinematic reels.'}
+                {game.id === 'roulette' && 'Place your bet and chase the red or black wheel.'}
+                {game.id === 'coinflip' && 'Heads or tails, fast-paced currency gamble.'}
+                {game.id === 'dice' && 'Roll the dice and bet on the total outcome.'}
+                {game.id === 'crash' && 'Cash out before the multiplier crashes.'}
+                {game.id === 'carddraw' && 'Draw the card and beat the deck.'}
+              </div>
             </button>
           ))}
         </div>
-      </div>
 
-      {/* Game Display Area */}
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-white/05 via-transparent to-transparent rounded-3xl" />
-          <div className="relative py-12">
-            {GameComponent && (
-              <GameComponent 
-                onBet={(betResult) => {
-                  console.log('Bet result:', betResult);
-                  // Handle bet result
-                }}
-              />
-            )}
+        <div className="relative mt-14 glass border border-white/10 rounded-[40px] p-10">
+          <h2 className="font-orbitron text-3xl font-black text-white mb-6">Featured game</h2>
+          <div className="grid gap-8 xl:grid-cols-[1.3fr_0.9fr]">
+            <div className="glass border border-white/10 rounded-[32px] p-8">
+              <div className="text-sm uppercase tracking-[0.35em] text-gray-400 mb-4">Live preview</div>
+              {GameComponent && (
+                <div className="relative rounded-[28px] border border-white/10 bg-black/20 p-6">
+                  <GameComponent onBet={(betResult) => { console.log('Bet result:', betResult); }} />
+                </div>
+              )}
+            </div>
+            <div className="glass border border-white/10 rounded-[32px] p-8">
+              <div className="text-sm uppercase tracking-[0.35em] text-gray-400 mb-4">Quick status</div>
+              <div className="space-y-4">
+                <div className="pill-card p-4 text-center">
+                  <div className="text-xs uppercase tracking-[0.25em] text-gray-400">Selected game</div>
+                  <div className="text-2xl font-orbitron font-black text-yellow-300">{selectedGame.toUpperCase()}</div>
+                </div>
+                <div className="pill-card p-4 text-center">
+                  <div className="text-xs uppercase tracking-[0.25em] text-gray-400">Balance</div>
+                  <div className="text-2xl font-orbitron font-black text-cyan-300">{currentPlayer?.balance?.toFixed(0)} 🪙</div>
+                </div>
+                <div className="pill-card p-4 text-center">
+                  <div className="text-xs uppercase tracking-[0.25em] text-gray-400">Action</div>
+                  <div className="text-base text-gray-300 font-semibold">Tap the cards above to switch games instantly.</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -9,6 +9,7 @@ const gameRoutes = require('./routes/gameRoutes');
 const rtpRoutes = require('./routes/rtpRoutes');
 const leaderboardRoutes = require('./routes/leaderboardRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const authRoutes = require('./routes/authRoutes');
 const { apiLimiter, errorHandler } = require('./middleware');
 const { initSockets } = require('./sockets/socketHandler');
 const { getRedis } = require('./config/redis');
@@ -38,6 +39,7 @@ app.use(express.json());
 app.use(apiLimiter);
 
 // Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/player', playerRoutes);
 app.use('/api/game', gameRoutes);
 app.use('/api/rtp', rtpRoutes);
