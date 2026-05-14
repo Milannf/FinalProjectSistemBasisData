@@ -1,32 +1,78 @@
 import { useEffect, useRef, useState } from 'react';
 
-const SYMBOLS = ['🍒', '💎', '🍋', '⭐', '🔔', '🃏', '🍀', '🌙', '🔥', '💰'];
+const SYMBOLS       = ['🍒', '💎', '🍋', '⭐', '🔔', '🃏', '🍀', '🌙', '🔥', '💰'];
+const REEL_DELAY_MS = 1500;
 
 function Reel({ spinning, finalSymbol, delay = 0 }) {
   const [displaySymbol, setDisplaySymbol] = useState('🎰');
-  const intervalRef = useRef(null);
+  const [isStopped,     setIsStopped]     = useState(false);
+
+  const intervalRef    = useRef(null);
+  const stopTimerRef   = useRef(null);
+  const finalSymbolRef = useRef(finalSymbol);
+
+  // Sync ref ke prop terbaru tanpa trigger re-render
+  useEffect(() => {
+    finalSymbolRef.current = finalSymbol;
+  });
 
   useEffect(() => {
     if (spinning) {
+      clearTimeout(stopTimerRef.current);  // batalkan stop yg pending
+      stopTimerRef.current = null;
+
+      clearInterval(intervalRef.current);  // bersihkan interval lama
+      setIsStopped(false);
+
       let i = 0;
       intervalRef.current = setInterval(() => {
         setDisplaySymbol(SYMBOLS[i % SYMBOLS.length]);
         i++;
       }, 80);
+
+      return () => {
+        clearTimeout(stopTimerRef.current);
+      };
+
     } else {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      setTimeout(() => {
-        setDisplaySymbol(finalSymbol || SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
+      stopTimerRef.current = setTimeout(() => {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+
+        const sym = finalSymbolRef.current
+          ?? SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+        setDisplaySymbol(sym);
+        setIsStopped(true);
       }, delay);
+
+      return () => {
+        clearTimeout(stopTimerRef.current);
+      };
     }
-    return () => clearInterval(intervalRef.current);
-  }, [spinning, finalSymbol, delay]);
+  }, [spinning, delay]); // finalSymbol 
+
+  useEffect(() => {
+    return () => {
+      clearInterval(intervalRef.current);
+      clearTimeout(stopTimerRef.current);
+    };
+  }, []);
 
   return (
-    <div className="reel-container w-24 h-24 glass border border-yellow-500/20 rounded-xl flex items-center justify-center">
+    <div
+      className="reel-container w-24 h-24 glass border rounded-xl flex items-center justify-center transition-all duration-300"
+      style={{
+        borderColor: isStopped ? 'rgba(245,197,24,0.55)' : 'rgba(245,197,24,0.2)',
+        boxShadow:   isStopped ? '0 0 18px rgba(245,197,24,0.35)' : 'none',
+      }}
+    >
       <span
-        className={`text-5xl select-none transition-all duration-200 ${spinning ? 'blur-sm scale-110' : 'blur-0 scale-100'}`}
-        style={{ filter: spinning ? 'blur(2px)' : 'none' }}
+        className="text-5xl select-none"
+        style={{
+          filter:     isStopped ? 'none' : 'blur(2px)',
+          transform:  isStopped ? 'scale(1)' : 'scale(1.1)',
+          transition: 'filter 0.25s, transform 0.25s',
+        }}
       >
         {displaySymbol}
       </span>
@@ -34,38 +80,16 @@ function Reel({ spinning, finalSymbol, delay = 0 }) {
   );
 }
 
-export default function SlotReels({ spinning, outcome, multiplier }) {
-  const getSymbols = () => {
-    if (!outcome) return [null, null, null];
-    if (outcome === 'win') {
-      if (multiplier >= 10) return ['💎', '💎', '💎'];
-      if (multiplier >= 5) return ['⭐', '⭐', '⭐'];
-      if (multiplier >= 3) return ['🔔', '🔔', '🔔'];
-      const s = SYMBOLS[Math.floor(Math.random() * 5)];
-      return [s, s, SYMBOLS[Math.floor(Math.random() * 5)]]; // 2 match for small win look
-    }
-    // Lose - all different
-    const used = new Set();
-    return [0, 1, 2].map(() => {
-      let s;
-      do { s = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]; } while (used.has(s));
-      used.add(s);
-      return s;
-    });
-  };
-
-  const [symbols, setSymbols] = useState([null, null, null]);
-
-  useEffect(() => {
-    if (!spinning && outcome) {
-      setSymbols(getSymbols());
-    }
-  }, [spinning, outcome]);
-
+export default function SlotReels({ spinning, reelSymbols = [null, null, null] }) {
   return (
     <div className="flex gap-3 items-center justify-center">
       {[0, 1, 2].map((i) => (
-        <Reel key={i} spinning={spinning} finalSymbol={symbols[i]} delay={i * 200} />
+        <Reel
+          key={i}
+          spinning={spinning}
+          finalSymbol={reelSymbols[i]}
+          delay={i * REEL_DELAY_MS}   // Reel 1: 0ms | Reel 2: 1500ms | Reel 3: 3000ms
+        />
       ))}
     </div>
   );
