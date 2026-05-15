@@ -39,8 +39,21 @@ export default function HomePage() {
         }}>
           <div style={{
             width: 'clamp(180px, 22vw, 280px)',
-            height: 'clamp(180px, 22vw, 280px)'
+            height: 'clamp(180px, 22vw, 280px)',
+            position: 'relative'
           }}>
+            <div
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                inset: '-10%',
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(245,197,24,0.45) 0%, rgba(245,197,24,0.0) 70%)',
+                filter: 'blur(18px)',
+                opacity: 0.7,
+                pointerEvents: 'none'
+              }}
+            />
             <DiceModel height="100%" />
           </div>
           <h1 className="font-orbitron font-black text-white text-glow-gold" style={{
@@ -72,7 +85,7 @@ export default function HomePage() {
           gap: '16px',
         }}>
           <Link
-            to="/games"
+            to="/casino"
             className="font-orbitron font-black"
             style={{
               display: 'flex',
@@ -88,8 +101,10 @@ export default function HomePage() {
               color: '#000',
               textDecoration: 'none',
               boxShadow: '0 20px 80px rgba(245,197,24,0.25)',
-              transition: 'transform 0.2s',
+              transition: 'transform 0.25s',
             }}
+            onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.04)'; }}
+            onMouseOut={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
           >
             PLAY NOW
           </Link>
@@ -109,7 +124,10 @@ export default function HomePage() {
               textTransform: 'uppercase',
               color: '#fde047',
               textDecoration: 'none',
+              transition: 'transform 0.25s',
             }}
+            onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.04)'; }}
+            onMouseOut={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
           >
             LEADERBOARD
           </Link>
@@ -118,8 +136,35 @@ export default function HomePage() {
       </section>
 
       {/* ── STATS ── */}
-      <section style={{ padding: 'clamp(40px, 6vw, 80px) clamp(16px, 4vw, 48px)' }}>
-        <div style={{ maxWidth: '75%', margin: '0 auto' }}>
+      <section style={{
+        position: 'relative',
+        overflow: 'hidden',
+        padding: 'clamp(40px, 6vw, 80px) clamp(16px, 4vw, 48px)'
+      }}>
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          src="/fallingdice-low.mp4"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            opacity: 0.35,
+          }}
+        />
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+          }}
+        />
+        <div style={{ maxWidth: '75%', margin: '0 auto', position: 'relative', zIndex: 1 }}>
 
           <div style={{
             display: 'grid',
@@ -162,7 +207,7 @@ export default function HomePage() {
             ].map((game) => (
               <Link
                 key={game.title}
-                to="/games"
+                to="/casino"
                 className="glass"
                 style={{
                   display: 'flex',
@@ -244,7 +289,7 @@ export default function HomePage() {
 
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
                 <Link
-                  to="/games"
+                  to="/casino"
                   className="font-orbitron font-black"
                   style={{
                     display: 'flex',

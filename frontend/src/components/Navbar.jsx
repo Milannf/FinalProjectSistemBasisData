@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 const NAV_LINKS = [
   { path: '/',            label: 'Home'        },
   { path: '/casino',      label: 'Casino'      },
-  { path: '/games',       label: 'Games'       },
   { path: '/leaderboard', label: 'Leaderboard' },
   { path: '/analytics',   label: 'Analytics'   },
   { path: '/admin',       label: 'Admin'       },
