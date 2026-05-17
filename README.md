@@ -652,17 +652,6 @@ npm run lint         # ESLint check
 
 ---
 
-## 👨‍💻 Teknologi Utama yang Dipelajari
-
-- Desain dan implementasi **relational database** dengan 5 model dan foreign key constraints
-- **ORM (Prisma)** untuk type-safe database queries dan schema management
-- **Caching strategy** dengan Redis — sorted sets, lists, strings dengan TTL
-- **Real-time communication** menggunakan Socket.io (WebSocket)
-- **REST API design** dengan Express.js dan JWT authentication
-- **Full-stack development** dengan React dan Node.js
-
----
-
 <div align="center">
 
 **Jokris99** — Final Project Sistem Basis Data
