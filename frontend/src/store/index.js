@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { fetchPlayer, fetchPlayers, fetchPlayerHistory } from '../services/api';
 
+
 // AUTH STORE
+
 export const useAuthStore = create((set, get) => ({
   user:            null,
   token:           null,
@@ -21,13 +23,8 @@ export const useAuthStore = create((set, get) => ({
       if (!response.ok) throw new Error(data.error);
 
       localStorage.setItem('token', data.token);
-      //Simpan player di dalam user agar WelcomePage bisa akses user.player
       set({ user: { ...data.user, player: data.player }, token: data.token, isAuthenticated: true, loading: false });
-
-      //Set currentPlayer langsung dari data auth
-      if (data.player) {
-        usePlayerStore.getState().loadPlayerFromAuth(data.player);
-      }
+      if (data.player) usePlayerStore.getState().loadPlayerFromAuth(data.player);
       return data;
     } catch (err) {
       set({ error: err.message, loading: false });
@@ -48,10 +45,7 @@ export const useAuthStore = create((set, get) => ({
 
       localStorage.setItem('token', data.token);
       set({ user: { ...data.user, player: data.player }, token: data.token, isAuthenticated: true, loading: false });
-
-      if (data.player) {
-        usePlayerStore.getState().loadPlayerFromAuth(data.player);
-      }
+      if (data.player) usePlayerStore.getState().loadPlayerFromAuth(data.player);
       return data;
     } catch (err) {
       set({ error: err.message, loading: false });
@@ -70,11 +64,14 @@ export const useAuthStore = create((set, get) => ({
       if (!response.ok) throw new Error(data.error);
 
       localStorage.setItem('token', data.token);
-      set({ user: { ...data.user, player: data.player }, token: data.token, isAuthenticated: true, loading: false });
-
-      if (data.player) {
-        usePlayerStore.getState().loadPlayerFromAuth(data.player);
-      }
+      // Tandai sebagai guest di state
+      set({
+        user:            { ...data.user, player: data.player, guestAccount: true },
+        token:           data.token,
+        isAuthenticated: true,
+        loading:         false,
+      });
+      if (data.player) usePlayerStore.getState().loadPlayerFromAuth(data.player);
       return data;
     } catch (err) {
       set({ error: err.message, loading: false });
@@ -82,11 +79,27 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  logout: () => {
+  // Logout guest
+  logout: async () => {
+    const { user, token } = get();
+    const isGuest = user?.guestAccount;
+
+    // Clear lokal dulu agar UI langsung redirect
     localStorage.removeItem('token');
-    // Reset player store juga saat logout
     usePlayerStore.getState().clearPlayer();
     set({ user: null, token: null, isAuthenticated: false });
+
+    // Background: hapus akun guest dari DB
+    if (isGuest && token) {
+      try {
+        await fetch('/api/auth/me', {
+          method:  'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch {
+        // Tidak perlu handle error — DB akan dibersihkan oleh cleanupGuests.js
+      }
+    }
   },
 
   checkAuth: async () => {
@@ -100,23 +113,21 @@ export const useAuthStore = create((set, get) => ({
       const data = await response.json();
       if (response.ok) {
         set({ user: data.user, token, isAuthenticated: true });
-
-        // Set currentPlayer dari token restore
         const player = data.player ?? data.user?.player;
-        if (player) {
-          usePlayerStore.getState().loadPlayerFromAuth(player);
-        }
+        if (player) usePlayerStore.getState().loadPlayerFromAuth(player);
         return data;
       } else {
         localStorage.removeItem('token');
       }
-    } catch (err) {
+    } catch {
       localStorage.removeItem('token');
     }
   },
 }));
 
+
 // PLAYER STORE
+
 export const usePlayerStore = create((set, get) => ({
   currentPlayer: null,
   players:       [],
@@ -125,13 +136,11 @@ export const usePlayerStore = create((set, get) => ({
 
   setCurrentPlayer: (player) => set({ currentPlayer: player }),
 
-  // oadPlayers tdk override currentPlayer jika sudah ada dari auth
   loadPlayers: async () => {
     set({ loading: true });
     try {
       const players = await fetchPlayers();
       set({ players, loading: false });
-      // Hanya set currentPlayer jika belum ada (belum login / belum set dari auth)
       if (!get().currentPlayer && players.length > 0) {
         set({ currentPlayer: players[0] });
       }
@@ -140,15 +149,9 @@ export const usePlayerStore = create((set, get) => ({
     }
   },
 
-  // Dipanggil oleh authStore setelah login/register/checkAuth
-  loadPlayerFromAuth: (player) => {
-    set({ currentPlayer: player });
-  },
+  loadPlayerFromAuth: (player) => set({ currentPlayer: player }),
 
-  // reset saat logout
-  clearPlayer: () => {
-    set({ currentPlayer: null });
-  },
+  clearPlayer: () => set({ currentPlayer: null }),
 
   refreshPlayer: async (id) => {
     try {
@@ -171,23 +174,23 @@ export const usePlayerStore = create((set, get) => ({
   },
 }));
 
+
 // GAME STORE
+
 export const useGameStore = create((set) => ({
-  isSpinning:  false,
-  lastResult:  null,
-  history:     [],
-  spinCount:   0,
+  isSpinning:   false,
+  lastResult:   null,
+  history:      [],
+  spinCount:    0,
   notification: null,
 
   setSpinning: (v) => set({ isSpinning: v }),
 
-  addResult: (result) => {
-    set((state) => ({
-      lastResult: result,
-      history:    [result, ...state.history].slice(0, 100),
-      spinCount:  state.spinCount + 1,
-    }));
-  },
+  addResult: (result) => set((state) => ({
+    lastResult: result,
+    history:    [result, ...state.history].slice(0, 100),
+    spinCount:  state.spinCount + 1,
+  })),
 
   setNotification: (msg) => {
     set({ notification: msg });
@@ -204,7 +207,9 @@ export const useGameStore = create((set) => ({
   },
 }));
 
+
 // LEADERBOARD STORE
+
 export const useLeaderboardStore = create((set) => ({
   leaderboard: [],
   recentWins:  [],

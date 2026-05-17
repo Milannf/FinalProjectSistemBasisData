@@ -5,40 +5,33 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const router = express.Router();
 
-// Ambil secret sekali, log peringatan jika tidak diset
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme_set_JWT_SECRET_in_env';
 if (!process.env.JWT_SECRET) {
-  console.warn('[Auth] ⚠️  JWT_SECRET tidak diset di .env — gunakan nilai aman di production!');
+  console.warn('[Auth] ⚠️  JWT_SECRET tidak diset di .env');
 }
 
 const signToken = (userId, expiresIn = '7d') =>
   jwt.sign({ userId }, JWT_SECRET, { expiresIn });
 
-// ── Register ─────────────────────────────────────────────────────────────────
+// ── Register ──────────────────────────────────────────────────────────────────
 router.post('/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
     if (!username || !email || !password)
       return res.status(400).json({ error: 'username, email, dan password wajib diisi' });
 
-    const existingUser = await prisma.user.findFirst({
-      where: { OR: [{ username }, { email }] },
-    });
-    if (existingUser)
-      return res.status(400).json({ error: 'Username atau email sudah digunakan' });
+    const existing = await prisma.user.findFirst({ where: { OR: [{ username }, { email }] } });
+    if (existing) return res.status(400).json({ error: 'Username atau email sudah digunakan' });
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({
-      data: { username, email, passwordHash },
-    });
+    const user   = await prisma.user.create({ data: { username, email, passwordHash } });
     const player = await prisma.player.create({
-      data: { userId: user.id, username: user.username, balance: 10000 },
+      data: { userId: user.id, username, balance: 10000 },
     });
 
-    const token = signToken(user.id);
-    res.json({ token, user: { id: user.id, username, email }, player });
-  } catch (error) {
-    console.error('[Auth] register error:', error.message);
+    res.json({ token: signToken(user.id), user: { id: user.id, username, email }, player });
+  } catch (err) {
+    console.error('[Auth] register:', err.message);
     res.status(500).json({ error: 'Registrasi gagal' });
   }
 });
@@ -55,29 +48,32 @@ router.post('/login', async (req, res) => {
     });
     if (!user) return res.status(400).json({ error: 'Kredensial tidak valid' });
 
-    // Guest tidak bisa login dengan password
+    if (user.isBanned)
+      return res.status(403).json({ error: 'Akun ini telah di-ban. Hubungi administrator.' });
+
     if (user.guestAccount)
       return res.status(400).json({ error: 'Akun guest tidak bisa login dengan password' });
 
-    const validPassword = await bcrypt.compare(password, user.passwordHash);
-    if (!validPassword) return res.status(400).json({ error: 'Kredensial tidak valid' });
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) return res.status(400).json({ error: 'Kredensial tidak valid' });
 
     const player = await prisma.player.findUnique({ where: { userId: user.id } });
-    const token  = signToken(user.id);
-
-    res.json({ token, user: { id: user.id, username: user.username, email: user.email }, player });
-  } catch (error) {
-    console.error('[Auth] login error:', error.message);
+    res.json({
+      token: signToken(user.id),
+      user: { id: user.id, username: user.username, email: user.email },
+      player,
+    });
+  } catch (err) {
+    console.error('[Auth] login:', err.message);
     res.status(500).json({ error: 'Login gagal' });
   }
 });
 
 // ── Guest Login ───────────────────────────────────────────────────────────────
+// token expired 1 hari
 router.post('/guest', async (req, res) => {
   try {
-    // Pastikan username unik dengan timestamp
     const guestUsername = `Guest${Date.now().toString().slice(-6)}`;
-
     const user = await prisma.user.create({
       data: {
         username:     guestUsername,
@@ -86,19 +82,24 @@ router.post('/guest', async (req, res) => {
         guestAccount: true,
       },
     });
+    // Saldo guest dibatasi 5000
     const player = await prisma.player.create({
-      data: { userId: user.id, username: user.username, balance: 10000 },
+      data: { userId: user.id, username: user.username, balance: 5000 },
     });
 
     const token = signToken(user.id, '1d');
-    res.json({ token, user: { id: user.id, username: user.username, email: user.email }, player });
-  } catch (error) {
-    console.error('[Auth] guest error:', error.message);
+    res.json({
+      token,
+      user:   { id: user.id, username: user.username, email: user.email, guestAccount: true },
+      player,
+    });
+  } catch (err) {
+    console.error('[Auth] guest:', err.message);
     res.status(500).json({ error: 'Guest login gagal' });
   }
 });
 
-// ── Middleware: verify token ──────────────────────────────────────────────────
+// ── Middleware auth ───────────────────────────────────────────────────────────
 const authenticate = (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'Akses ditolak — token tidak ada' });
@@ -119,10 +120,32 @@ router.get('/me', authenticate, async (req, res) => {
       include: { player: true },
     });
     if (!user) return res.status(404).json({ error: 'User tidak ditemukan' });
+    if (user.isBanned)
+      return res.status(403).json({ error: 'Akun ini telah di-ban.' });
+
     res.json({ user, player: user.player });
-  } catch (error) {
-    console.error('[Auth] /me error:', error.message);
+  } catch (err) {
+    console.error('[Auth] /me:', err.message);
     res.status(500).json({ error: 'Gagal mengambil data user' });
+  }
+});
+
+// ── DELETE /me — hapus akun sendiri (termasuk auto-delete saat guest logout) ──
+router.delete('/me', authenticate, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where:   { id: req.userId },
+      include: { player: true },
+    });
+    if (!user) return res.status(404).json({ error: 'User tidak ditemukan' });
+
+    const { _deleteUserCascade } = require('../controllers/adminController');
+    await _deleteUserCascade(user);
+
+    res.json({ success: true, message: 'Akun berhasil dihapus' });
+  } catch (err) {
+    console.error('[Auth] delete /me:', err.message);
+    res.status(500).json({ error: 'Gagal menghapus akun' });
   }
 });
 
